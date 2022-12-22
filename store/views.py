@@ -18,6 +18,8 @@ class ProductViewSet(ModelViewSet):
 class OrderViewSet(ModelViewSet):
     serializer_class = OrderSerializer
     queryset = Order.objects.all()
+    permission_classes = [IsAdminUser]
+
 
 class CategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializer

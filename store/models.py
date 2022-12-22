@@ -34,7 +34,7 @@ class User(AbstractUser):
 class Product(models.Model):
     name = models.CharField(max_length=60)
     price = models.IntegerField(default=0)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, default=1)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     description = models.CharField(
         max_length=250, default='', blank=True, null=True)
     image = models.ImageField(upload_to='uploads/products/')
@@ -56,9 +56,7 @@ class Product(models.Model):
 
 
 class Order(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
     price = models.IntegerField()
     address = models.CharField(max_length=50, default='', blank=True)
     phone = models.CharField(max_length=50, default='', blank=True)
