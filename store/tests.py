@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 from . import models
+from . import factories
 
 
 class ApiTestCase(TestCase):
@@ -26,7 +27,30 @@ class ApiTestCase(TestCase):
             resp = self.client.get(path)
             self.assertEqual(resp.status_code, 403)
 
+    def test_CRUD(self):
+        self.client.login(username='admin', password='admin')
+        product_data = vars(factories.ProductFactory.stub())
+        product_data['category'] = models.Category.objects.first().id
+        order_data = vars(factories.OrderFactory.stub())
+        order_data['user'] = models.User.objects.first().id
+        data_list = [
+            vars(factories.CategoryFactory.stub()),
+            product_data,
+            order_data,
+            vars(factories.UserFactory.stub())
+        ]
+        for path, data in zip(self.list_paths, data_list):
+            resp = self.client.post(path, data=data)
+            self.assertEqual(resp.status_code, 201)
+
     def tearDown(self):
-        pass
+        super().tearDown()
+        models.Category.objects.delete()
+        models.User.objects.delete()
+        models.Product.objects.delete()
+        models.Order.objects.delete()
+
+
+
 
 
