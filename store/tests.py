@@ -28,6 +28,7 @@ class ApiTestCase(TestCase):
             self.assertEqual(resp.status_code, 403)
 
     def test_CRUD(self):
+        mods = (models.Order, models.Product, models.Category, models.User)
         self.client.login(username='admin', password='admin')
         product_data = vars(factories.ProductFactory.stub())
         product_data['category'] = models.Category.objects.first().id
@@ -39,16 +40,27 @@ class ApiTestCase(TestCase):
             order_data,
             vars(factories.UserFactory.stub())
         ]
+        # create
         for path, data in zip(self.list_paths, data_list):
             resp = self.client.post(path, data=data)
             self.assertEqual(resp.status_code, 201)
+            # created
+            resp = self.client.get(f"{path}{resp.data['id']}/")
+            self.assertEqual(resp.status_code, 200)
+
+        # delete
+        ids = [cls.objects.first().id for cls in mods]
+        paths = ('/orders/', '/products/', '/categories/', '/users/')
+        for path, identifier in zip(paths, ids):
+            resp = self.client.delete(f'{path}{identifier}/')
+            self.assertEqual(resp.status_code, 204)
 
     def tearDown(self):
         super().tearDown()
-        models.Category.objects.delete()
-        models.User.objects.delete()
-        models.Product.objects.delete()
-        models.Order.objects.delete()
+        models.Category.objects.all().delete()
+        models.User.objects.all().delete()
+        models.Product.objects.all().delete()
+        models.Order.objects.all().delete()
 
 
 

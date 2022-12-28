@@ -35,4 +35,4 @@ class OrderSerializer(ModelSerializer):
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name']
+        fields = ['name', 'id']
