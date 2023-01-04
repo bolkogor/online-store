@@ -30,7 +30,7 @@ class UserFactory(factory.Factory, DictStubMixin):
 class OrderFactory(factory.Factory):
     class Meta:
         model = Order
-    user = factory.SubFactory(UserFactory)
+    address = '123 Doe St'
     items = [
         {'item': i, 'quantity': i, 'price': i*10}
         for i in range(1, 3)

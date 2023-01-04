@@ -2,6 +2,10 @@ from rest_framework import serializers
 from .models import User, Product, Order, Category, Item
 
 
+def get_total(price, quantity):
+    return price*quantity
+
+
 class RelatedFieldRerp(serializers.RelatedField):
     def to_internal_value(self, data):
         return data.id
@@ -23,11 +27,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.Serializer):
-
     order = RelatedFieldRerp(read_only=True)
     item = RelatedFieldRerp(read_only=False, queryset=Product.objects.all())
     quantity = serializers.IntegerField(default=1)
     price = serializers.DecimalField(max_digits=8, decimal_places=2)
+    total = serializers.SerializerMethodField()
+
+    def get_total(self, obj):
+        return obj.quantity * obj.price
 
     def to_internal_value(self, data):
         data['item'] = Product.objects.get(pk=data['item'])
@@ -37,18 +44,30 @@ class OrderItemSerializer(serializers.Serializer):
         data = super(OrderItemSerializer, self).to_representation(instance)
         return data
 
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    total = serializers.SerializerMethodField()
+    user = RelatedFieldRerp(read_only=True)
+
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'address', 'date', 'status', 'items']
+        fields = ['id', 'user', 'address', 'date', 'status', 'items', 'total']
+
+    def get_total(self, obj):
+        total = 0
+        for item in obj.items.all():
+            total += item.price * item.quantity
+        return total
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
         order = Order.objects.create(**validated_data)
         for item_data in items_data:
-            item_data['item'] = Product.objects.get(id=item_data['item'])
+            prod = Product.objects.get(id=item_data['item'])
+            item_data['item'] = prod
+            item_data['price'] = prod.price
             Item.objects.create(order=order, **item_data)
         return order
 

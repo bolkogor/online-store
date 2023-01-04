@@ -57,7 +57,7 @@ class Product(models.Model):
 class Item(models.Model):
     item = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
-    price = models.DecimalField(decimal_places=2, max_digits=10, blank=True, null=True)
+    price = models.DecimalField(decimal_places=2, max_digits=10)
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
 
 

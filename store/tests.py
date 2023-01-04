@@ -1,4 +1,3 @@
-import random
 
 from django.test import TestCase, Client
 from . import models
@@ -10,6 +9,7 @@ class ApiTestCase(TestCase):
         models.Category.objects.create(name='Everything')
         models.Product.objects.create(name='Prod1', category_id=1, price=10)
         models.User.objects.create_superuser(username='admin', password='admin')
+        models.User.objects.create_user(username='user', password='user')
         self.client = Client()
         self.list_paths = ('/categories/', '/products/', '/orders/', '/users/')
 
@@ -25,9 +25,12 @@ class ApiTestCase(TestCase):
         for path in ('/categories/', '/products/', '/products/1/'):
             resp = self.client.get(path)
             self.assertEqual(resp.status_code, 200)
-        for path in ('/orders/', '/users/'):
-            resp = self.client.get(path)
-            self.assertEqual(resp.status_code, 403)
+        # orders filtered out
+        resp = self.client.get('/orders/')
+        self.assertEqual(len(resp.data), 0)
+        # no access
+        resp = self.client.get('/users/')
+        self.assertEqual(resp.status_code, 403)
 
     def test_CRUD(self):
         mods = (models.Order, models.Product, models.Category, models.User)
@@ -51,25 +54,29 @@ class ApiTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
         # Order items have been created
         self.assertEqual(models.Item.objects.count(), len(order_data['items']))
+        user_client = Client()
+        user_client.login(username='user', password='user')
+        # user gets filtered queryset / not available
+        resp = user_client.get('/orders/1/')
+        self.assertEqual(resp.status_code, 404)
+        # create new order by that user
+        resp = user_client.post('/orders/', data=order_data, content_type='application/json')
+        self.assertEqual(resp.status_code, 201)
+        # has access to their order
+        resp = user_client.get(f'/orders/{resp.data["id"]}/')
+        self.assertEqual(resp.status_code, 200)
+
+
+
+
         # delete
         ids = [cls.objects.first().id for cls in mods]
         paths = ('/orders/', '/products/', '/categories/', '/users/')
         for path, identifier in zip(paths, ids):
             resp = self.client.delete(f'{path}{identifier}/')
             self.assertEqual(resp.status_code, 204)
-
-    def test_order_with_items(self):
-        for i in range(3):
-            cat = models.Category.objects.create(**vars(factories.CategoryFactory.stub()))
-            product = models.Product.objects.create(**vars(factories.ProductFactory.stub(category=cat)))
-            order_data = [
-                {
-                'item': models.Product.objects.first().id,
-                'quantity': random.Random().randint(1, 10),
-                }
-                for i in range(3)
-        ]
-        pass
+        # Items deleted with order
+        self.assertEqual(models.Item.objects.count(), 0)
 
     def tearDown(self):
         super().tearDown()
