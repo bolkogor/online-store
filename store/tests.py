@@ -1,3 +1,5 @@
+import random
+
 from django.test import TestCase, Client
 from . import models
 from . import factories
@@ -42,18 +44,32 @@ class ApiTestCase(TestCase):
         ]
         # create
         for path, data in zip(self.list_paths, data_list):
-            resp = self.client.post(path, data=data)
+            resp = self.client.post(path, data=data, content_type='application/json')
             self.assertEqual(resp.status_code, 201)
             # created
             resp = self.client.get(f"{path}{resp.data['id']}/")
             self.assertEqual(resp.status_code, 200)
-
+        # Order items have been created
+        self.assertEqual(models.Item.objects.count(), len(order_data['items']))
         # delete
         ids = [cls.objects.first().id for cls in mods]
         paths = ('/orders/', '/products/', '/categories/', '/users/')
         for path, identifier in zip(paths, ids):
             resp = self.client.delete(f'{path}{identifier}/')
             self.assertEqual(resp.status_code, 204)
+
+    def test_order_with_items(self):
+        for i in range(3):
+            cat = models.Category.objects.create(**vars(factories.CategoryFactory.stub()))
+            product = models.Product.objects.create(**vars(factories.ProductFactory.stub(category=cat)))
+            order_data = [
+                {
+                'item': models.Product.objects.first().id,
+                'quantity': random.Random().randint(1, 10),
+                }
+                for i in range(3)
+        ]
+        pass
 
     def tearDown(self):
         super().tearDown()

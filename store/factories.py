@@ -1,6 +1,8 @@
+import random
+
 import factory
 
-from .models import Order, Product, Category, User
+from .models import Order, Product, Category, User, Item
 
 
 models = (Order, Product, Category, User)
@@ -29,6 +31,10 @@ class OrderFactory(factory.Factory):
     class Meta:
         model = Order
     user = factory.SubFactory(UserFactory)
+    items = [
+        {'item': i, 'quantity': i, 'price': i*10}
+        for i in range(1, 3)
+    ]
 
 
 class CategoryFactory(factory.Factory):
@@ -44,3 +50,13 @@ class ProductFactory(factory.Factory, DictStubMixin):
     price = 100
     description = 'category contains name'
     category = factory.SubFactory(CategoryFactory)
+
+
+class ItemFactory(factory.Factory):
+    class Meta:
+        model = Item
+
+    item = factory.SubFactory(ProductFactory)
+    quantity = random.Random(x=1).randint(1, 10)
+    price = random.Random(x=1).randint(1, 100)
+    order = factory.SubFactory(OrderFactory)

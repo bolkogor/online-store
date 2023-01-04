@@ -33,10 +33,9 @@ class User(AbstractUser):
 
 class Product(models.Model):
     name = models.CharField(max_length=60)
-    price = models.IntegerField(default=0)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    description = models.CharField(
-        max_length=250, default='', blank=True, null=True)
+    description = models.CharField(max_length=250, default='', blank=True, null=True)
     image = models.ImageField(upload_to='uploads/products/')
 
     @staticmethod
@@ -55,6 +54,13 @@ class Product(models.Model):
             return Product.get_all_products()
 
 
+class Item(models.Model):
+    item = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    price = models.DecimalField(decimal_places=2, max_digits=10, blank=True, null=True)
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
+
+
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     address = models.CharField(max_length=50, default='', blank=True)
@@ -70,7 +76,7 @@ class Order(models.Model):
         return Order.objects.filter(customer=customer_id).order_by('-date')
 
 
-class OrderItem(models.Model):
-    item = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    price = models.DecimalField(decimal_places=2, max_digits=10)
+    @property
+    def products(self):
+        return {1: 1, 4: 5}  # dummy
+

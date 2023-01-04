@@ -20,6 +20,13 @@ class OrderViewSet(ModelViewSet):
     queryset = Order.objects.all()
     permission_classes = [IsAdminUser]
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return OrderSerializer
+        return OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        return super(OrderViewSet, self).create(request, *args, **kwargs)
 
 class CategoryViewSet(ModelViewSet):
     serializer_class = CategorySerializer
