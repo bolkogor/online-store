@@ -1,10 +1,12 @@
-from rest_framework import status
+from rest_framework import status, filters
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAdminUser
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer
 from .models import User, Product, Order, Category
 from .filters import OrderFilterBackend
+from .permissions import OrderPermission
 
 
 class UserViewSet(ModelViewSet):
@@ -16,12 +18,16 @@ class UserViewSet(ModelViewSet):
 class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['name']
+    filterset_fields = ('category', 'id')
 
 
 class OrderViewSet(ModelViewSet):
     serializer_class = OrderSerializer
     queryset = Order.objects.all()
     filter_backends = [OrderFilterBackend]
+    permission_classes = [OrderPermission]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

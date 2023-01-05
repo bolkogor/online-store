@@ -25,9 +25,9 @@ class ApiTestCase(TestCase):
         for path in ('/categories/', '/products/', '/products/1/'):
             resp = self.client.get(path)
             self.assertEqual(resp.status_code, 200)
-        # orders filtered out
+        # orders not accessible for anonymous users
         resp = self.client.get('/orders/')
-        self.assertEqual(len(resp.data), 0)
+        self.assertEqual(resp.status_code, 403)
         # no access
         resp = self.client.get('/users/')
         self.assertEqual(resp.status_code, 403)
@@ -65,9 +65,18 @@ class ApiTestCase(TestCase):
         # has access to their order
         resp = user_client.get(f'/orders/{resp.data["id"]}/')
         self.assertEqual(resp.status_code, 200)
-
-
-
+        # filter products for categories
+        resp = self.client.get('/products/?category=2')
+        self.assertEqual(len(resp.data), 0)
+        resp = self.client.get('/products/?category=1')
+        self.assertEqual(len(resp.data), 2)
+        # search product by name
+        resp = self.client.get('/products/?search=prod1')
+        self.assertEqual(len(resp.data), 1)
+        resp = self.client.get('/products/?search=prod')
+        self.assertEqual(len(resp.data), 2)
+        resp = self.client.get('/products/?search=non_existing')
+        self.assertEqual(len(resp.data), 0)
 
         # delete
         ids = [cls.objects.first().id for cls in mods]
@@ -77,6 +86,8 @@ class ApiTestCase(TestCase):
             self.assertEqual(resp.status_code, 204)
         # Items deleted with order
         self.assertEqual(models.Item.objects.count(), 0)
+
+
 
     def tearDown(self):
         super().tearDown()

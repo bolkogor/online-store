@@ -8,17 +8,7 @@ from .models import Order, Product, Category, User, Item
 models = (Order, Product, Category, User)
 
 
-class DictStubMixin:
-    @classmethod
-    def stub_as_dict(cls):
-        stub = cls.stub()
-        res = {}
-        for attr, value in stub:
-            res[attr] = value
-        return res
-
-
-class UserFactory(factory.Factory, DictStubMixin):
+class UserFactory(factory.Factory):
     class Meta:
         model = User
     first_name = factory.Faker('first_name')
@@ -43,7 +33,7 @@ class CategoryFactory(factory.Factory):
     name = 'name'
 
 
-class ProductFactory(factory.Factory, DictStubMixin):
+class ProductFactory(factory.Factory):
     class Meta:
         model = Product
     name = 'product'
